@@ -1,65 +1,89 @@
 #!/usr/bin/env python3
 """
-Organise any single folder you paste into an A-Z tree.
-NOW pre-creates A-Z folders instantly, whether or not a file needs them.
+move_to_az.py  –  drop a folder on this script → every **file** sorted into A-Z buckets.
+ASCII-only bucket names guarantee compatibility with FAT/exFAT/NTFS drives.
+MIT licence – do anything you want.
 """
-import os, shutil, argparse, pathlib, string
+from __future__ import annotations
+import argparse
+import string
+import unicodedata
+from pathlib import Path
+from shutil import move, copy2
 
-def ensure_az_folders(root: pathlib.Path) -> None:
-    """Create A-Z (and #) in one go – only if missing."""
-    for letter in string.ascii_uppercase:          # A-Z
+SRC_HINT = r"Example: C:\Users\%USERNAME%\Desktop\New folder"
+
+
+# ------------------------------------------------------------------
+# helpers
+# ------------------------------------------------------------------
+def ensure_az(root: Path) -> None:
+    """Create A-Z + '#' buckets (ASCII-only names)."""
+    for letter in string.ascii_uppercase:
         (root / letter).mkdir(exist_ok=True)
-    (root / "#").mkdir(exist_ok=True)              # non-letters bucket
-    print("✔  A-Z folders ensured in", root)
+    (root / "#").mkdir(exist_ok=True)
 
-def az_dir_for(name: str, root: pathlib.Path) -> pathlib.Path:
-    first = name[0].upper()
-    if not first.isalpha():
-        first = "#"
-    return root / first
 
-def main():
-    parser = argparse.ArgumentParser(description="A-to-Z organiser (pre-create edition)")
-    parser.add_argument("--go", action="store_true", help="Really perform the move")
-    parser.add_argument("--copy", action="store_true", help="Copy instead of move")
-    args = parser.parse_args()
+def az_bucket(name: str, root: Path) -> Path:
+    """
+    Return ASCII bucket for *name*.
+    Non-ASCII first char  →  '#' bucket (safe for every filesystem).
+    """
+    first = unicodedata.normalize("NFKD", name[0])[0].upper()
+    return root / (first if first.isascii() and first.isalpha() else "#")
 
-    src_txt = input("Paste the folder you want to organise: ").strip().strip('"')
-    src = pathlib.Path(src_txt).expanduser().resolve()
-    if not src.is_dir():
-        print("That is not a valid folder – aborting.")
-        return
 
-    dst_txt = input("Where should the A-Z tree be created? [same folder = press ENTER] ").strip().strip('"')
-    dst = pathlib.Path(dst_txt).expanduser().resolve() if dst_txt else src
+def unique_name(dest: Path) -> Path:
+    """If *dest* exists return file (1), file (2), …  else *dest* itself."""
+    if not dest.exists():
+        return dest
+    stem, suffix, n = dest.stem, dest.suffix, 1
+    while True:
+        candidate = dest.with_name(f"{stem} ({n}){suffix}")
+        if not candidate.exists():
+            return candidate
+        n += 1
 
-    ensure_az_folders(dst)          # <<<<< instant A-Z creation
 
-    action = shutil.copy2 if args.copy else shutil.move
-    dry = not args.go
-
-    print("\nDRY RUN – nothing moved yet" if dry else "\nMOVING…")
-    print("Source :", src)
-    print("A-Z at :", dst)
-    print("-" * 60)
+# ------------------------------------------------------------------
+# core
+# ------------------------------------------------------------------
+def organise(src: Path, dst: Path, *, copy: bool = False, dry: bool = True) -> None:
+    """Move/copy every top-level file into A-Z tree."""
+    action = copy2 if copy else move
+    ensure_az(dst)
 
     for item in src.iterdir():
         if item.is_file():
-            az = az_dir_for(item.name, dst)
-            dest = az / item.name
+            target_dir = az_bucket(item.name, dst)
+            final = unique_name(target_dir / item.name)
 
-            counter = 1
-            stem, suffix = dest.stem, dest.suffix
-            while dest.exists():
-                dest = az / f"{stem} ({counter}){suffix}"
-                counter += 1
-
-            print(f"{'[preview] ' if dry else ''}{item.name}  →  {dest}")
+            tag = "[preview] " if dry else ""
+            print(f"{tag}{item.name}  →  {final}")
             if not dry:
-                action(item, dest)
+                action(item, final)
 
-    print("-" * 60)
-    print("Done – A-Z tree ready.")
 
+# ------------------------------------------------------------------
+# CLI
+# ------------------------------------------------------------------
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Sort files into A-Z folders.")
+    parser.add_argument("src", nargs="?", help=f"folder to organise  ({SRC_HINT})")
+    parser.add_argument("-d", "--dst", help="where A-Z tree lives  [same as src]")
+    parser.add_argument("--copy", action="store_true", help="copy instead of move")
+    parser.add_argument("--go", action="store_true", help="actually perform the action")
+    args = parser.parse_args()
+
+    src = Path(args.src or input("Folder to organise: ").strip('"'))
+    dst = Path(args.dst or input("A-Z tree location [ENTER = same]: ").strip('"') or src)
+
+    if not src.is_dir():
+        parser.error("Source must be an existing directory")
+
+    organise(src, dst, copy=args.copy, dry=not args.go)
+
+
+# ------------------------------------------------------------------
 if __name__ == "__main__":
     main()
