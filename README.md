@@ -5,7 +5,7 @@ Empty folders or non-letter files land in `#`.
 
 ## Quick start
 
-1. Download [latest release](https://github.com/YOUR_USERNAME/a-z-file-organizer/releases) or clone the repo.
+1. Download [latest release](https://github.com/elaichix/a-z-file-organizer/releases) or clone the repo.
 2. Open terminal / CMD in the folder you want to organise.
 3. Run:
 
