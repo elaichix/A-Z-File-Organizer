@@ -27,7 +27,7 @@ def main():
     src_txt = input("Paste the folder you want to organise: ").strip().strip('"')
     src = pathlib.Path(src_txt).expanduser().resolve()
     if not src.is_dir():
-        print("❌  That is not a valid folder – aborting.")
+        print("That is not a valid folder – aborting.")
         return
 
     dst_txt = input("Where should the A-Z tree be created? [same folder = press ENTER] ").strip().strip('"')
