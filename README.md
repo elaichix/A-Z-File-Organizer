@@ -1,14 +1,25 @@
-# A-Z File Organizer
+# Move to A-Z
 
-Drag-and-drop (or right-click) any folder → every **file** inside is moved/copied into neat A-Z sub-folders.  
-Empty folders or non-letter files land in `#`.
+A lightweight Python script that organizes files into alphabetical (A-Z) folders with full Unicode support and filesystem compatibility.
 
-## Quick start
+## Features
 
-1. Download [latest release](https://github.com/elaichix/a-z-file-organizer/releases) or clone the repo.
-2. Open terminal / CMD in the folder you want to organise.
-3. Run:
+- **Automatic A-Z folder creation** - Creates 26 alphabetical folders + one "#" folder
+- **Unicode-aware sorting** - Handles non-ASCII characters safely
+- **Filesystem compatible** - ASCII-only folder names work with FAT/exFAT/NTFS
+- **Safe operations** - Prevents overwrites with automatic naming
+- **Dry-run mode** - Preview changes before executing
+- **Copy or Move** - Choose between copying or moving files
+
+## 📸 Screenshot
+
+![Move to A-Z in Action](Screenshot.png)
+
+## Installation
 
 ```bash
-python az_organise.py          # dry-run preview
-python az_organise.py --go     # actually move files
+# Clone the repository
+git clone https://github.com/elaichix/A-Z-File-Organizer.git
+cd move_to_az
+
+# No dependencies required - uses Python standard library only
